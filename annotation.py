@@ -272,11 +272,11 @@ class Gene(object):
 
             ac.set_title(self.name + ' (' + self.id + ')', fontsize=12)
             ac.fill_between(np.arange(len(pidx)), coverage[pidx], edgecolor='none', facecolor=fc)
+            ac.set_ylim([0, ac.get_ylim()[1]])
             ac.set_xlim([-150, cumul_dist_adj[-1]+150])
             ac.set_xticklabels([])
             ac.set_xticks([])
             format_plot(ac, tick_length=4, hide=['top', 'right'])
-
         else:
             ax.set_title(self.name + ' (' + self.id + ')', fontsize=12)
 
@@ -388,7 +388,7 @@ class Annotation(object):
                     if np.mod(len(self.genes), 1000)==0 and verbose:
                         print('\rGenes parsed: {}'.format(len(self.genes)), end='')
             if verbose:
-                print('Genes parsed: {}'.format(len(self.genes)))
+                print('\rGenes parsed: {}'.format(len(self.genes)))
 
         self.gene_ids = np.array(self.gene_ids)
         self.gene_names = np.array(self.gene_names)
