@@ -100,7 +100,7 @@ class Exon(object):
 
 class Transcript(object):
     """Represents a transcripts and its exons"""
-    def __init__(self, transcript_id, transcript_name, transcript_type, gene, start_pos, end_pos, exon_list=None):
+    def __init__(self, transcript_id, transcript_name, transcript_type, gene, start_pos, end_pos):
         self.id = transcript_id
         self.name = transcript_name
         self.type = transcript_type
@@ -112,7 +112,6 @@ class Transcript(object):
         self.stop_codon = []
         self.utr5 = []
         self.utr3 = []
-        if exon_list: self.exons = exon_list
 
     def __str__(self, ref=1):
         """Print text representation of transcript structure"""
@@ -166,8 +165,10 @@ class Gene(object):
                 ecoord.append([e.start_pos, e.end_pos])
         return interval_union(ecoord)
 
-    def plot(self, coverage=None, max_intron=1000, scale=0.4, ax=None, highlight=None):
+    def plot(self, coverage=None, max_intron=1000, scale=0.4, ax=None, highlight=None,
+             fc=[0.6, 0.88, 1], ec=[0, 0.7, 1]):
         """Visualization"""
+        max_intron = int(max_intron)
 
         axes_input = True
         if ax is None:
@@ -188,9 +189,6 @@ class Gene(object):
             ax = fig.add_axes([dl/fw, db/fh, aw/fw, ah/fh])
             if coverage is not None:
                 ac = fig.add_axes([dl/fw, (db+ah+0.1)/fh, aw/fw, ch/fh])
-
-        fc = hsv_to_rgb([0.55,0.4,1])
-        ec = hsv_to_rgb([0.55,1,1])
 
         # cumulative lengths of exons+introns
         ce = self.get_collapsed_coords()
@@ -261,6 +259,7 @@ class Gene(object):
             # only plot first max_intron bases of introns
             if not ce[-1][1]-ce[0][0]+1 == len(coverage):
                 raise ValueError('Coverage ({}) does not match gene length ({})'.format(len(coverage), ce[-1][1]-ce[0][0]+1))
+            # coordinates:
             pidx = [np.arange(ce[0][0],ce[0][1]+1)]
             for i in range(1,ce.shape[0]):
                 li = np.minimum(ce[i,0]-1 - ce[i-1,1], max_intron)
@@ -271,7 +270,10 @@ class Gene(object):
             pidx = pidx-pidx[0]
 
             ac.set_title(self.name + ' (' + self.id + ')', fontsize=12)
-            ac.fill_between(np.arange(len(pidx)), coverage[pidx], edgecolor='none', facecolor=fc)
+            if len(coverage.shape)==1:
+                ac.fill_between(np.arange(len(pidx)), coverage[pidx], edgecolor='none', facecolor=3*[0.66])
+            else:
+                ac.plot(np.arange(len(pidx)), coverage[pidx])
             ac.set_ylim([0, ac.get_ylim()[1]])
             ac.set_xlim([-150, cumul_dist_adj[-1]+150])
             ac.set_xticklabels([])
