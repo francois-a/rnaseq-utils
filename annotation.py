@@ -525,7 +525,7 @@ class Annotation(object):
 
         Definition used: exon unique to transcript, flanking exons present in other transcripts
         """
-        if not hasattr(self, cassette_transcripts) or len(self.cassette_transcripts)==0:
+        if not hasattr(self, 'cassette_transcripts') or len(self.cassette_transcripts)==0:
             self.cassette_transcripts = []
             for g in self.genes:
                 # proj = np.bincount(np.concatenate([np.arange(e.start_pos-g.start_pos,e.end_pos-g.start_pos+1) for t in g.transcripts for e in t.exons]))
