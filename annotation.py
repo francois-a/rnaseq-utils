@@ -243,8 +243,9 @@ class Gene(object):
         ax.set_xlim([-150,cumul_dist_adj[-1]+150])
         ax.set_yticks(range(len(self.transcripts)))#, ha='right')
         ax.set_yticklabels([t.id for t in self.transcripts[::-1]], fontsize=9)
-        ax.set_xticks([0, cumul_dist_adj[-1]])
-        ax.set_xticklabels([self.start_pos, self.end_pos], ha='center', fontsize=9)
+        if not axes_input:
+            ax.set_xticks([0, cumul_dist_adj[-1]])
+            ax.set_xticklabels([self.start_pos, self.end_pos], ha='center', fontsize=9)
 
         if not axes_input:  # add transcript type label
             ax2 = ax.twinx()
@@ -413,12 +414,26 @@ class Annotation(object):
         self.chr_index = dict([(chrs[i], [sidx[i],eidx[i]]) for i in range(len(chrs))])
         self.chr_genes = dict([(chrs[i], self.genes[sidx[i]:eidx[i]+1]) for i in range(len(chrs))])
 
+        # interval trees with gene starts/ends for each chr
+        self.gene_interval_trees = defaultdict()
+        for g in self.genes:
+            self.gene_interval_trees.setdefault(g.chr, IntervalTree()).add(g.start_pos, g.end_pos+1, g)
+
         # calculate transcript lenghts
         for g in self.genes:
             for t in g.transcripts:
                 t.length = sum([e.length for e in t.exons])
 
         self.add_biotype()
+
+
+    def query_genes(self, region_str):
+        chrom, pos = region_str.split(':')
+        pos = [int(i) for i in pos.split('-')]
+        if len(pos)==2:
+            return self.gene_interval_trees[chrom].find(pos[0], pos[1])
+        else:
+            return self.gene_interval_trees[chrom].find(pos[0], pos[0])
 
 
     def add_biotype(self):
