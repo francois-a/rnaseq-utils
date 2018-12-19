@@ -58,13 +58,15 @@ def inverse_normal_transform(M):
     """
     Transform rows to a standard normal distribution
     """
-    R = stats.mstats.rankdata(M, axis=1)  # ties are averaged
-    if isinstance(M, pd.DataFrame):
-        Q = pd.DataFrame(stats.norm.ppf(R/(M.shape[1]+1)),
-                         index=M.index, columns=M.columns)
+    if isinstance(M, pd.Series):
+        r = stats.mstats.rankdata(M)
+        return pd.Series(stats.norm.ppf(r/(M.shape[0]+1)), index=M.index)
     else:
+        R = stats.mstats.rankdata(M, axis=1)  # ties are averaged
         Q = stats.norm.ppf(R/(M.shape[1]+1))
-    return Q
+        if isinstance(M, pd.DataFrame):
+            Q = pd.DataFrame(Q, index=M.index, columns=M.columns)
+        return Q
 
 #--------------------------------------
 #  DESeq size factor normalization
@@ -101,7 +103,7 @@ def deseq2_cpm(counts_df):
 #--------------------------------------
 #  edgeR TMM normalization
 #--------------------------------------
-def edgeR_calcnormfactors(counts_df, ref=None, logratio_trim=0.3,
+def edger_calcnormfactors(counts_df, ref=None, logratio_trim=0.3,
                           sum_trim=0.05, acutoff=-1e10, verbose=False):
     """
     Calculate TMM (Trimmed Mean of M values) normalization.
@@ -192,7 +194,7 @@ def edger_cpm(counts_df, tmm=None, normalized_lib_sizes=True):
     lib_size = counts_df.sum(axis=0)
     if normalized_lib_sizes:
         if tmm is None:
-            tmm = edgeR_calcNormFactors(counts_df)
+            tmm = edger_calcnormfactors(counts_df)
         lib_size = lib_size * tmm
     return counts_df / lib_size * 1e6
 
@@ -202,7 +204,7 @@ def edger_cpm(counts_df, tmm=None, normalized_lib_sizes=True):
 def voom_transform(counts_df):
     """Apply counts transformation from limma-voom"""
     lib_size = counts_df.sum(0)
-    norm_factors = edgeR_calcNormFactors(counts_df)
+    norm_factors = edger_calcnormfactors(counts_df)
     return np.log2((counts_df + 0.5) / (lib_size*norm_factors + 1) * 1e6)
 
 #--------------------------------------

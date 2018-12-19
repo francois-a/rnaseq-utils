@@ -707,6 +707,7 @@ class Annotation(object):
             # ex.append(gm)
             if np.mod(i+1,100)==0 or i==len(self.genes)-1:
                 print('\r  * Loading mappability. Genes parsed: {0:5d}/{1:d}'.format(i+1,len(self.genes)), end='')
+        print()
         bw.close()
 
 
