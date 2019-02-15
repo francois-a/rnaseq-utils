@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.path as mpath
 from matplotlib.colors import hsv_to_rgb
+import gzip
 import scipy.interpolate as interpolate
 from collections import defaultdict, Iterable
 import pyBigWig
@@ -303,7 +304,12 @@ class Annotation(object):
         elif isinstance(varin, str):  # load from GTF
             gtfpath = varin
 
-            with open(gtfpath, 'r') as gtf:
+            if gtfpath.endswith('.gz'):
+                opener = gzip.open(gtfpath, 'rt')
+            else:
+                opener = open(gtfpath, 'r')
+
+            with opener as gtf:
                 for row in gtf:
                     row = row.strip().split('\t')
 

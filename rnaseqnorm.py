@@ -60,7 +60,7 @@ def inverse_normal_transform(M):
     """
     if isinstance(M, pd.Series):
         r = stats.mstats.rankdata(M)
-        return pd.Series(stats.norm.ppf(r/(M.shape[0]+1)), index=M.index)
+        return pd.Series(stats.norm.ppf(r/(M.shape[0]+1)), index=M.index, name=M.name)
     else:
         R = stats.mstats.rankdata(M, axis=1)  # ties are averaged
         Q = stats.norm.ppf(R/(M.shape[1]+1))
