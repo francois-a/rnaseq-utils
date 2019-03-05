@@ -727,7 +727,7 @@ class Annotation(object):
         """
         if not os.path.exists(bed_path) or overwrite:
             with open(bed_path, 'w') as bed:
-                for g in annot.genes:
+                for g in self.genes:
                     for t in g.transcripts:
                         # BED intervals: [...), 0-based
                         start = str(t.start_pos-1)
@@ -740,14 +740,15 @@ class Annotation(object):
                             exon_starts = [str(e.start_pos-t.exons[-1].start_pos) for e in t.exons[::-1]]
 
                         if attribute=='id':
-                            tid = t.id
+                            tid = [t.id, t.name]
                         elif attribute=='name':
-                            tid = t.name
-                        s = [g.chr, start, end, tid, '1000', g.strand, start, end, '.',
+                            tid = [t.name, t.id]
+                        s = [g.chr, start, end, tid[0], '1000', g.strand, start, end, '.',
                             str(len(t.exons)),
                             ','.join(exon_lengths)+',',
                             ','.join(exon_starts)+',',
-                            g.__dict__[attribute]]
+                            tid[1]]
+                            # t.__dict__[attribute]]
 
                         bed.write('\t'.join(s)+'\n')
 
