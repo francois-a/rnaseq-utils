@@ -16,7 +16,9 @@ export PYTHONPATH=$PYTHONPATH:/<path_to>/rnaseq-utils
 
 ### Examples
 Download the GENCODE 30 GTF:
-```wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_30/gencode.v30.annotation.gtf.gz```
+```
+wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_30/gencode.v30.annotation.gtf.gz
+```
 Load annotation
 ```
 import annotation
