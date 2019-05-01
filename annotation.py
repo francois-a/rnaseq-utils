@@ -167,9 +167,11 @@ class Gene(object):
         return interval_union(ecoord)
 
     def plot(self, coverage=None, max_intron=1000, scale=0.4, ax=None, highlight=None,
-             fc=[0.6, 0.88, 1], ec=[0, 0.7, 1]):
+             fc=[0.6, 0.88, 1], ec=[0, 0.7, 1], reference=None, show_ylabels=True):
         """Visualization"""
         max_intron = int(max_intron)
+        if reference is None:
+            reference = self.start_pos
 
         axes_input = True
         if ax is None:
@@ -218,44 +220,52 @@ class Gene(object):
             for u in t.utr3:
                 utr[u[0]-t.start_pos:u[1]-t.start_pos+1] = 1
 
-            idx = np.nonzero(t.start_pos-self.start_pos>=cumul_dist)[0][-1]
-            s = t.start_pos - self.start_pos - (cumul_dist[idx]-cumul_dist_adj[idx])
-            idx = np.nonzero(t.end_pos-self.start_pos>=cumul_dist)[0][-1]
-            e = t.end_pos - self.start_pos - (cumul_dist[idx]-cumul_dist_adj[idx])
-            ax.plot(np.array([s+1, e-1]), [i,i], 'k-', lw=1.25)
+            idx = np.nonzero(t.start_pos - self.start_pos>=cumul_dist)[0][-1]
+            s = t.start_pos - reference - (cumul_dist[idx]-cumul_dist_adj[idx])
+            idx = np.nonzero(t.end_pos - self.start_pos>=cumul_dist)[0][-1]
+            e = t.end_pos - reference - (cumul_dist[idx]-cumul_dist_adj[idx])
+            # plot background line
+            wx = 0.05
+            patch = patches.Rectangle((s, i-wx/2), e-s+1, wx, fc=fc, zorder=9)
+            ax.add_patch(patch)
 
             for e in t.exons:
                 ev = np.ones(e.end_pos-e.start_pos+1)
                 ev[utr[e.start_pos-t.start_pos:e.end_pos-t.start_pos+1]==1] = 0.5
-                ex = np.arange(e.start_pos-self.start_pos, e.end_pos-self.start_pos+1)
+                ex = np.arange(e.start_pos-reference, e.end_pos-reference+1)
 
                 # adjust for skipped intron positions
                 idx = np.nonzero(e.start_pos-self.start_pos>=cumul_dist)[0][-1]
                 ex -= (cumul_dist[idx]-cumul_dist_adj[idx])
 
-                vertices = np.vstack((np.hstack((ex,ex[::-1], ex[0])), i+scale*np.hstack((ev,-ev[::-1], ev[0])))).T
-                patch = patches.PathPatch(mpath.Path(vertices, closed=True), fc=fc, ec=ec, lw=1.25, zorder=10)
+                vertices = np.vstack((np.hstack((ex, ex[::-1], ex[0])), i+scale*np.hstack((ev,-ev[::-1], ev[0])))).T
+                patch = patches.PathPatch(mpath.Path(vertices, closed=True), fc=fc, ec='none', lw=0, zorder=10)
                 ax.add_patch(patch)
 
         if highlight is not None:
             ax.plot()
 
         ax.set_ylim([-0.6, i+0.6])
-        ax.set_xlim([-150,cumul_dist_adj[-1]+150])
-        ax.set_yticks(range(len(self.transcripts)))#, ha='right')
-        ax.set_yticklabels([t.id for t in self.transcripts[::-1]], fontsize=9)
+        xlim = ax.get_xlim()
+        if xlim[0]==0 and xlim[1]==1:
+            xlim = np.array([0, cumul_dist_adj[-1]-1]) + self.start_pos - reference
+            if not axes_input:
+                xlim = [xlim[0]-150, xlim[1]+150]
+            ax.set_xlim(xlim)
+        if show_ylabels:
+            ax.set_yticks(range(len(self.transcripts)))#, ha='right')
+            ax.set_yticklabels([t.id for t in self.transcripts[::-1]], fontsize=9)
+
         if not axes_input:
             ax.set_xticks([0, cumul_dist_adj[-1]])
             ax.set_xticklabels([self.start_pos, self.end_pos], ha='center', fontsize=9)
-
-        if not axes_input:  # add transcript type label
+            # add transcript type label
             ax2 = ax.twinx()
             ax2.set_ylim([-0.6, i+0.6])
             ax2.set_yticks(range(len(self.transcripts)))
             ax2.set_yticklabels([t.type.replace('_', ' ').capitalize() for t in self.transcripts[::-1]], ha='left', fontsize=9)
             format_plot(ax2, tick_length=4, hide=['top', 'left', 'right'])
-
-        format_plot(ax, tick_length=4, hide=['top', 'left', 'right'])
+            format_plot(ax, tick_length=4, hide=['top', 'left', 'right'])
 
         if coverage is not None:
             # only plot first max_intron bases of introns
@@ -277,7 +287,7 @@ class Gene(object):
             else:
                 ac.plot(np.arange(len(pidx)), coverage[pidx])
             ac.set_ylim([0, ac.get_ylim()[1]])
-            ac.set_xlim([-150, cumul_dist_adj[-1]+150])
+            ac.set_xlim(ax.get_xlim())
             ac.set_xticklabels([])
             ac.set_xticks([])
             format_plot(ac, tick_length=4, hide=['top', 'right'])
