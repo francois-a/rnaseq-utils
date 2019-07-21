@@ -166,8 +166,19 @@ class Gene(object):
                 ecoord.append([e.start_pos, e.end_pos])
         return interval_union(ecoord)
 
+    def shift_pos(self, offset):
+        self.start_pos += offset
+        self.end_pos += offset
+        for t in self.transcripts:
+            t.start_pos += offset
+            t.end_pos += offset
+            for e in t.exons:
+                e.start_pos += offset
+                e.end_pos += offset
+
     def plot(self, coverage=None, max_intron=1000, scale=0.4, ax=None, highlight=None,
-             fc=[0.6, 0.88, 1], ec=[0, 0.7, 1], reference=None, show_ylabels=True):
+             fc=[0.6, 0.88, 1], ec=[0, 0.7, 1], reference=None, show_ylabels=True,
+             intron_coords=None, highlight_intron=None):
         """Visualization"""
         max_intron = int(max_intron)
         if reference is None:
@@ -226,8 +237,27 @@ class Gene(object):
             e = t.end_pos - reference - (cumul_dist[idx]-cumul_dist_adj[idx])
             # plot background line
             wx = 0.05
-            patch = patches.Rectangle((s, i-wx/2), e-s+1, wx, fc=fc, zorder=9)
+            patch = patches.Rectangle((s, i-wx/2), e-s, wx, fc=fc, zorder=9, clip_on=False)
             ax.add_patch(patch)
+
+            # plot highlighted introns
+            if intron_coords is not None:
+                if self.strand == '+':
+                    introns = [[t.exons[i].end_pos, t.exons[i+1].start_pos] for i in range(len(t.exons)-1)]
+                else:
+                    introns = [[t.exons[i+1].end_pos, t.exons[i].start_pos] for i in range(len(t.exons)-1)]
+
+                for ic in intron_coords:
+                    if ic in introns:
+                        idx = np.nonzero(ic[0] - self.start_pos>=cumul_dist)[0][-1]
+                        s = ic[0] - reference - (cumul_dist[idx]-cumul_dist_adj[idx])
+                        idx = np.nonzero(ic[1] - self.start_pos>=cumul_dist)[0][-1]
+                        e = ic[1] - reference - (cumul_dist[idx]-cumul_dist_adj[idx])
+                        if ic == highlight_intron:
+                            patch = patches.Rectangle((s, i-wx*2), e-s, 4*wx, fc=hsv_to_rgb([0, 0.8, 1]), zorder=19, clip_on=False)
+                        else:
+                            patch = patches.Rectangle((s, i-wx), e-s, 2*wx, fc=hsv_to_rgb([0.55, 0.8, 1]), zorder=19, clip_on=False)
+                        ax.add_patch(patch)
 
             for e in t.exons:
                 ev = np.ones(e.end_pos-e.start_pos+1)
@@ -239,7 +269,7 @@ class Gene(object):
                 ex -= (cumul_dist[idx]-cumul_dist_adj[idx])
 
                 vertices = np.vstack((np.hstack((ex, ex[::-1], ex[0])), i+scale*np.hstack((ev,-ev[::-1], ev[0])))).T
-                patch = patches.PathPatch(mpath.Path(vertices, closed=True), fc=fc, ec='none', lw=0, zorder=10)
+                patch = patches.PathPatch(mpath.Path(vertices, closed=True), fc=fc, ec='none', lw=0, zorder=10, clip_on=False)
                 ax.add_patch(patch)
 
         if highlight is not None:
@@ -582,9 +612,7 @@ class Annotation(object):
 
 
     def get_junctions(self, min_intron_length=0):
-        """
-        Return DataFrame with junction information: chr, intron_start, intron_end
-        """
+        """Return DataFrame with junction information: chr, intron_start, intron_end"""
         junctions = []
         for g in self.genes:
             for t in g.transcripts:
@@ -761,4 +789,3 @@ class Annotation(object):
                             # t.__dict__[attribute]]
 
                         bed.write('\t'.join(s)+'\n')
-
