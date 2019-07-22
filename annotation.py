@@ -178,7 +178,7 @@ class Gene(object):
 
     def plot(self, coverage=None, max_intron=1000, scale=0.4, ax=None, highlight=None,
              fc=[0.6, 0.88, 1], ec=[0, 0.7, 1], reference=None, show_ylabels=True,
-             intron_coords=None, highlight_intron=None):
+             intron_coords=None, highlight_intron=None, clip_on=False):
         """Visualization"""
         max_intron = int(max_intron)
         if reference is None:
@@ -237,7 +237,7 @@ class Gene(object):
             e = t.end_pos - reference - (cumul_dist[idx]-cumul_dist_adj[idx])
             # plot background line
             wx = 0.05
-            patch = patches.Rectangle((s, i-wx/2), e-s, wx, fc=fc, zorder=9, clip_on=False)
+            patch = patches.Rectangle((s, i-wx/2), e-s, wx, fc=fc, zorder=9, clip_on=clip_on)
             ax.add_patch(patch)
 
             # plot highlighted introns
@@ -254,9 +254,9 @@ class Gene(object):
                         idx = np.nonzero(ic[1] - self.start_pos>=cumul_dist)[0][-1]
                         e = ic[1] - reference - (cumul_dist[idx]-cumul_dist_adj[idx])
                         if ic == highlight_intron:
-                            patch = patches.Rectangle((s, i-wx*2), e-s, 4*wx, fc=hsv_to_rgb([0, 0.8, 1]), zorder=19, clip_on=False)
+                            patch = patches.Rectangle((s, i-wx*2), e-s, 4*wx, fc=hsv_to_rgb([0, 0.8, 1]), zorder=19, clip_on=clip_on)
                         else:
-                            patch = patches.Rectangle((s, i-wx), e-s, 2*wx, fc=hsv_to_rgb([0.55, 0.8, 1]), zorder=19, clip_on=False)
+                            patch = patches.Rectangle((s, i-wx), e-s, 2*wx, fc=hsv_to_rgb([0.55, 0.8, 1]), zorder=19, clip_on=clip_on)
                         ax.add_patch(patch)
 
             for e in t.exons:
@@ -269,7 +269,7 @@ class Gene(object):
                 ex -= (cumul_dist[idx]-cumul_dist_adj[idx])
 
                 vertices = np.vstack((np.hstack((ex, ex[::-1], ex[0])), i+scale*np.hstack((ev,-ev[::-1], ev[0])))).T
-                patch = patches.PathPatch(mpath.Path(vertices, closed=True), fc=fc, ec='none', lw=0, zorder=10, clip_on=False)
+                patch = patches.PathPatch(mpath.Path(vertices, closed=True), fc=fc, ec='none', lw=0, zorder=10, clip_on=clip_on)
                 ax.add_patch(patch)
 
         if highlight is not None:
