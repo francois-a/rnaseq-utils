@@ -256,7 +256,7 @@ class Gene(object):
                         if ic == highlight_intron:
                             patch = patches.Rectangle((s, i-wx*2), e-s, 4*wx, fc=hsv_to_rgb([0, 0.8, 1]), zorder=19, clip_on=clip_on)
                         else:
-                            patch = patches.Rectangle((s, i-wx), e-s, 2*wx, fc=hsv_to_rgb([0.55, 0.8, 1]), zorder=19, clip_on=clip_on)
+                            patch = patches.Rectangle((s, i-wx), e-s, 2*wx, fc=hsv_to_rgb([0.1, 0.8, 1]), zorder=19, clip_on=clip_on)
                         ax.add_patch(patch)
 
             for e in t.exons:
@@ -271,9 +271,6 @@ class Gene(object):
                 vertices = np.vstack((np.hstack((ex, ex[::-1], ex[0])), i+scale*np.hstack((ev,-ev[::-1], ev[0])))).T
                 patch = patches.PathPatch(mpath.Path(vertices, closed=True), fc=fc, ec='none', lw=0, zorder=10, clip_on=clip_on)
                 ax.add_patch(patch)
-
-        if highlight is not None:
-            ax.plot()
 
         ax.set_ylim([-0.6, i+0.6])
         xlim = ax.get_xlim()
